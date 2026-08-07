@@ -24,6 +24,13 @@ export function canonicalId(raw) {
   return s
 }
 
+/**
+ * Kaynakta `xmltv_id` boş olan kanallara grabber sitenin iç id'sini veriyor
+ * ("58d29bb0eefad3db9c6062bf" gibi). Bunlar okunaksız ve `channels.overrides.json`
+ * ile eşleşmiyor; böyle id'leri kanal adından türetiyoruz ("BBC Earth" -> "bbcearth").
+ */
+const isOpaqueId = (id) => /^[0-9a-f]{20,}$/.test(id)
+
 /** "20260806193000 +0300" -> "2026-08-06T19:30:00+03:00" */
 export function xmltvToIso(value) {
   const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?\s*([+-]\d{4})?$/.exec(
@@ -96,10 +103,24 @@ function main() {
 
   // --- kanallar: id bazında tekilleştir, ilk gelen kazanır, eksikleri doldur ---
   const channels = new Map()
+  const idMap = new Map() // XMLTV'deki id -> yayınlanan id (programlar için de gerekli)
+  let renamed = 0
   for (const raw of asArray(tv.channel)) {
-    const id = canonicalId(raw['@_id'])
-    if (!id) continue
-    const name = text(raw['display-name']) ?? id
+    const sourceId = canonicalId(raw['@_id'])
+    if (!sourceId) continue
+    const name = text(raw['display-name']) ?? sourceId
+
+    // Opak id'yi ada çevir; ad başka bir kanalda kullanılıyorsa opak id'de kal.
+    let id = sourceId
+    if (isOpaqueId(sourceId)) {
+      const slug = canonicalId(name)
+      if (slug && !channels.has(slug)) {
+        id = slug
+        renamed++
+      }
+    }
+    idMap.set(sourceId, id)
+
     const logo = iconSrc(raw.icon)
     const existing = channels.get(id)
     if (existing) {
@@ -113,7 +134,8 @@ function main() {
   const programmes = new Map()
   let skipped = 0
   for (const raw of asArray(tv.programme)) {
-    const channel = canonicalId(raw['@_channel'])
+    const sourceChannel = canonicalId(raw['@_channel'])
+    const channel = idMap.get(sourceChannel) ?? sourceChannel
     const start = xmltvToIso(raw['@_start'])
     const stop = xmltvToIso(raw['@_stop'])
     const title = text(raw.title)
@@ -160,7 +182,8 @@ function main() {
 
   console.log(
     `${outputPath}: ${channelList.length} kanal, ${programmeList.length} program` +
-      (skipped ? ` (${skipped} kayıt atlandı)` : '')
+      (skipped ? ` (${skipped} kayıt atlandı)` : '') +
+      (renamed ? `, ${renamed} kanalın id'si adından türetildi` : '')
   )
 }
 
