@@ -1,0 +1,4 @@
+node_modules/
+.epg/
+guide.xml
+public/turkey.json

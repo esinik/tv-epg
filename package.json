@@ -1,0 +1,14 @@
+{
+  "name": "tv-epg",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Türkiye EPG pipeline: iptv-org/epg -> XMLTV -> Bugün TV'de JSON",
+  "scripts": {
+    "convert": "node convert.mjs guide.xml public/turkey.json",
+    "check": "node check.mjs public/turkey.json"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0"
+  }
+}

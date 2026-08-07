@@ -1,0 +1,72 @@
+name: build-epg
+
+on:
+  schedule:
+    # 03:00 ve 15:00 (TR saati). GitHub cron UTC çalışır.
+    - cron: "0 0,12 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Aynı anda tek yayın; gecikmiş bir çalışma yenisini ezmesin.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: iptv-org/epg ile XMLTV üret
+        run: |
+          git clone --depth 1 https://github.com/iptv-org/epg.git .epg
+          cd .epg
+          npm ci
+          npm run grab --- \
+            --sites=turksatkablo.com.tr,tvplus.com.tr \
+            --lang=tr \
+            --days=7 \
+            --maxConnections=5 \
+            --output=../guide.xml
+
+      - name: JSON'a dönüştür
+        run: |
+          npm install
+          node convert.mjs guide.xml public/turkey.json
+
+      - name: Çıktıyı doğrula
+        run: node check.mjs public/turkey.json
+
+      - name: Ham XMLTV'yi hata ayıklama için sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guide-xml
+          path: guide.xml
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,24 @@
+{
+  "_comment": "Kanal başına düzeltmeler. Anahtar = canonicalId(convert.mjs). Buradaki alanlar XMLTV'den geleni ezer. category değerleri uygulamadaki ChannelCategory ile aynı olmalı: ulusal, haber, spor, cocuk, muzik, belgesel, eglence, other.",
+
+  "trt1": { "name": "TRT 1", "category": "ulusal" },
+  "atv": { "name": "ATV", "category": "ulusal" },
+  "kanald": { "name": "Kanal D", "category": "ulusal" },
+  "star": { "name": "Star TV", "category": "ulusal" },
+  "show": { "name": "Show TV", "category": "ulusal" },
+  "now": { "name": "NOW", "category": "ulusal" },
+  "tv8": { "name": "TV8", "category": "ulusal" },
+
+  "trthaber": { "name": "TRT Haber", "category": "haber" },
+  "ntv": { "name": "NTV", "category": "haber" },
+  "cnnturk": { "name": "CNN Türk", "category": "haber" },
+  "haberturk": { "name": "Habertürk", "category": "haber" },
+
+  "trtspor": { "name": "TRT Spor", "category": "spor" },
+  "sportstv": { "name": "Sports TV", "category": "spor" },
+
+  "trtcocuk": { "name": "TRT Çocuk", "category": "cocuk" },
+
+  "trtbelgesel": { "name": "TRT Belgesel", "category": "belgesel" },
+  "trtmuzik": { "name": "TRT Müzik", "category": "muzik" }
+}
