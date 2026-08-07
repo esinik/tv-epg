@@ -73,7 +73,22 @@ function loadOverrides() {
 
 function main() {
   const xml = readFileSync(inputPath, 'utf8')
-  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
+  // processEntities'in varsayılan sınırı 1000 toplam genişletme; 7 günlük rehberde
+  // program başlıklarındaki &amp; / &#39; gibi varlıklar bunu kolayca aşıyor.
+  // Sınırı yükseltiyoruz ama kapatmıyoruz: XMLTV üçüncü taraf bir siteden geliyor,
+  // "XML bomb" koruması sonsuza açılmasın.
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '@_',
+    // htmlEntities olmadan "&#252;" gibi sayısal varlıklar metinde ham kalıyor
+    // (Türkçe karakterler bazı kaynaklarda böyle geliyor).
+    htmlEntities: true,
+    processEntities: {
+      enabled: true,
+      maxTotalExpansions: 5_000_000,
+      maxEntityCount: 100_000,
+    },
+  })
   const tv = parser.parse(xml)?.tv
   if (!tv) throw new Error(`${inputPath} içinde <tv> kökü bulunamadı`)
 
