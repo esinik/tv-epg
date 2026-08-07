@@ -9,7 +9,7 @@ on:
     inputs:
       sites:
         description: "Kaynak siteler (virgülle)"
-        default: "digiturk.com.tr,dsmart.com.tr"
+        default: "dsmart.com.tr"
       days:
         description: "Kaç günlük akış"
         default: "7"
@@ -38,15 +38,17 @@ jobs:
         with:
           node-version: "20"
 
-      # Kaynak siteler: 07.08.2026'da dördü de tek tek denendi.
-      #   digiturk.com.tr  -> çalışıyor (birincil)
-      #   dsmart.com.tr    -> çalışıyor, bazı kanallarda boş yanıt (tamamlayıcı)
-      #   tvplus.com.tr    -> TR IP'den çalışıyor, GitHub runner'dan çöküyor
-      #                       ("Cannot read properties of undefined") -> kullanılmıyor
+      # Kaynak site seçimi (07.08.2026'da dördü de hem TR IP'den hem GitHub
+      # runner'dan tek tek denendi):
+      #   dsmart.com.tr       -> runner'dan ÇALIŞIYOR (tek gün: 57 kanal/1824 program)
+      #   digiturk.com.tr     -> TR IP'den mükemmel, runner'dan 112 kanalın hepsine 403
+      #   tvplus.com.tr       -> TR IP'den çalışıyor, runner'dan "undefined headers"
       #   turksatkablo.com.tr -> sertifika zinciri bozuk, her yerden başarısız
+      # Yani GitHub'ın ABD IP'sinden erişilebilen tek kaynak dsmart.
+      # digiturk/tvplus eklemek istersen TR IP'li bir makinede çalıştırman gerekir.
       - name: iptv-org/epg ile XMLTV üret
         env:
-          SITES: ${{ inputs.sites || 'digiturk.com.tr,dsmart.com.tr' }}
+          SITES: ${{ inputs.sites || 'dsmart.com.tr' }}
           DAYS: ${{ inputs.days || '7' }}
         run: |
           git clone --depth 1 https://github.com/iptv-org/epg.git .epg
