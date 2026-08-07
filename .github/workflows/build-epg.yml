@@ -4,9 +4,19 @@ on:
   schedule:
     # 03:00 ve 15:00 (TR saati). GitHub cron UTC çalışır.
     - cron: "0 0,12 * * *"
+  # Elle çalıştırırken kapsamı daraltabilirsin: tek site + 1 gün ile hızlı deneme.
   workflow_dispatch:
-  push:
-    branches: [main]
+    inputs:
+      sites:
+        description: "Kaynak siteler (virgülle)"
+        default: "digiturk.com.tr,dsmart.com.tr"
+      days:
+        description: "Kaç günlük akış"
+        default: "7"
+      publish:
+        description: "Pages'e yayınla"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -28,15 +38,25 @@ jobs:
         with:
           node-version: "20"
 
+      # Kaynak siteler: 07.08.2026'da dördü de tek tek denendi.
+      #   digiturk.com.tr  -> çalışıyor (birincil)
+      #   dsmart.com.tr    -> çalışıyor, bazı kanallarda boş yanıt (tamamlayıcı)
+      #   tvplus.com.tr    -> TR IP'den çalışıyor, GitHub runner'dan çöküyor
+      #                       ("Cannot read properties of undefined") -> kullanılmıyor
+      #   turksatkablo.com.tr -> sertifika zinciri bozuk, her yerden başarısız
       - name: iptv-org/epg ile XMLTV üret
+        env:
+          SITES: ${{ inputs.sites || 'digiturk.com.tr,dsmart.com.tr' }}
+          DAYS: ${{ inputs.days || '7' }}
         run: |
           git clone --depth 1 https://github.com/iptv-org/epg.git .epg
           cd .epg
           npm ci
           npm run grab --- \
-            --sites=turksatkablo.com.tr,tvplus.com.tr \
+            --sites="$SITES" \
             --lang=tr \
-            --days=7 \
+            --days="$DAYS" \
+            --timeout=20000 \
             --maxConnections=5 \
             --output=../guide.xml
 
@@ -58,11 +78,13 @@ jobs:
           if-no-files-found: ignore
 
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ inputs.publish != false }}
         with:
           path: public
 
   deploy:
     needs: build
+    if: ${{ inputs.publish != false }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
