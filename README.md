@@ -163,20 +163,36 @@ sabitte (Adım 6). JSON gelmiyorsa Actions'a bak.
 
 ## Ayarlamak isteyebileceklerin
 
-**Hangi siteler.** `build-epg.yml` içindeki `--sites=` satırı. iptv-org/epg'nin çalışan
-Türkiye kaynakları:
+**Hangi siteler.** `build-epg.yml` içindeki `--sites=` satırı. iptv-org/epg'nin
+`SITES.md` dosyası dördünü de 🟢 gösteriyor ama **07.08.2026'da tek tek denendiğinde**
+tablo şöyle çıktı:
 
-| Site | Kanal |
-|---|---|
-| `turksatkablo.com.tr` | 177 |
-| `tvplus.com.tr` | 150 |
-| `digiturk.com.tr` | 112 |
-| `dsmart.com.tr` | 100 |
+| Site | TR IP'den (yerel) | GitHub runner'dan (ABD IP) |
+|---|---|---|
+| `dsmart.com.tr` | çalışıyor | **çalışıyor** ✅ |
+| `digiturk.com.tr` | 5/5 kanal, çok hızlı | 112 kanalın hepsine **403** |
+| `tvplus.com.tr` | 4/5 kanal | 1050 istekten 26'sı |
+| `turksatkablo.com.tr` | sertifika zinciri bozuk | aynı hata |
 
-Şu an ilk ikisi kullanılıyor. Tek site yetmiyor: bazı kanalların (Star, NOW gibi) tek bir
-sitede `xmltv_id` alanı boş olduğu için o kanallar atlanıyor; ikinci site boşlukları
-dolduruyor. Site eklemek kanal sayısını artırır ama çalışma süresini ve hata olasılığını da
-artırır.
+Yani **GitHub'ın sunucusundan erişilebilen tek kaynak `dsmart`** — pipeline bu yüzden
+onunla çalışıyor. digiturk ve tvplus Türkiye'den bakınca sorunsuz; yurt dışı IP'yi
+engelliyorlar.
+
+### Ulusal kanal eksiği
+
+dsmart'ın listesinde TRT 1, Show TV, NTV, CNN Türk, Haber Türk, teve2 var ama
+**ATV, Kanal D, Star TV, NOW, TV8, FOX yok**. Bunları eklemenin tek yolu grab adımını
+**Türkiye IP'sinden** çalıştırmak:
+
+- **Self-hosted runner:** kendi Mac'ine GitHub runner kur, workflow'da `runs-on: self-hosted`
+  yaz. Workflow aynı kalır, sadece nerede çalıştığı değişir.
+- **Yerel script + push:** aşağıdaki "Kendi bilgisayarında" adımlarını bir launchd/cron
+  görevine bağla, üretilen `turkey.json`'ı repoya push et; Pages onu yayınlar.
+- **TR çıkışlı proxy/VPS:** grab `--proxy socks5://...` destekliyor (ücretli).
+
+Üçü de Mac'in o saatte açık olmasını ya da para harcamayı gerektiriyor. Uygulama
+offline-first olduğu ve 7 günlük akış indirdiği için **bir günün kaçması kullanıcıya
+yansımaz**.
 
 **Kaç günlük akış.** `--days=7`. Uygulamadaki gün seçici ±7 gün gösteriyor, 7 yeterli.
 
