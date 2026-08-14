@@ -31,7 +31,12 @@
 
 	<key>RunAtLoad</key>
 	<false/>
+
+	<!-- ProcessType=Background KULLANMA: macOS o görevleri düşük öncelikli
+	     çalıştırıyor ve ~2 dakikalık çekim 10 dakikada bile bitmiyor.
+	     Standard, kısa süreli bu iş için doğru olan. -->
 	<key>ProcessType</key>
-	<string>Background</string>
+	<string>Standard</string>
+
 </dict>
 </plist>
