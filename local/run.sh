@@ -17,6 +17,15 @@ mkdir -p "$LOG_DIR"
 # launchd asgari bir PATH ile çalışır; node ve git'i bulabilmesi için genişlet.
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
+# nvm ile kurulu sürümü PATH'in önüne al. Bu makinede Homebrew'un node'u v26 ve
+# grabber onda "TransformError" ile düşüyor; nvm'deki v20 sorunsuz çalışıyor.
+# En yüksek v20/v22'yi seç, yoksa PATH'teki node'a düş.
+NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -d "$NVM_DIR/versions/node" ]; then
+  NODE_BIN=$(ls -d "$NVM_DIR"/versions/node/v2[02]* 2>/dev/null | sort -V | tail -1)/bin
+  [ -x "$NODE_BIN/node" ] && export PATH="$NODE_BIN:$PATH"
+fi
+
 notify() {  # notify "başlık" "mesaj"
   /usr/bin/osascript -e "display notification \"${2//\"/\\\"}\" with title \"${1//\"/\\\"}\"" \
     >/dev/null 2>&1 || true
