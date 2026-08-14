@@ -2,3 +2,5 @@ node_modules/
 .epg/
 guide.xml
 public/turkey.json
+build/
+.local-guide.xml

@@ -25,11 +25,15 @@ export function canonicalId(raw) {
 }
 
 /**
- * Kaynakta `xmltv_id` boş olan kanallara grabber sitenin iç id'sini veriyor
- * ("58d29bb0eefad3db9c6062bf" gibi). Bunlar okunaksız ve `channels.overrides.json`
- * ile eşleşmiyor; böyle id'leri kanal adından türetiyoruz ("BBC Earth" -> "bbcearth").
+ * Kaynakta `xmltv_id` boş olan kanallara grabber sitenin iç id'sini veriyor:
+ * dsmart uzun hex ("58d29bb0eefad3db9c6062bf"), digiturk kısa sayı ("513").
+ * Bunlar hem okunaksız hem de iki kaynağı birleştirirken aynı kanalı iki kez
+ * listelenmesine yol açıyor (BBC Earth / BBC EARTH gibi). Böyle id'leri kanal
+ * adından türetiyoruz ("BBC Earth" -> "bbcearth"), böylece kaynaklar eşleşiyor.
+ * Gerçek xmltv_id'ler her zaman harf içerir ("TRT1.tr@SD"), o yüzden salt
+ * sayısal bir id'yi opak saymak güvenli.
  */
-const isOpaqueId = (id) => /^[0-9a-f]{20,}$/.test(id)
+const isOpaqueId = (id) => /^[0-9a-f]{20,}$/.test(id) || /^\d+$/.test(id)
 
 /** "20260806193000 +0300" -> "2026-08-06T19:30:00+03:00" */
 export function xmltvToIso(value) {

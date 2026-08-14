@@ -65,7 +65,14 @@ jobs:
       - name: JSON'a dönüştür
         run: |
           npm install
-          node convert.mjs guide.xml public/turkey.json
+          node convert.mjs guide.xml build/dsmart.json
+
+      # digiturk ABD IP'sine 403 verdiği için burada çekilemiyor; ATV dahil o
+      # kanallar Ertan'ın Mac'inde (TR IP) üretilip data/digiturk.json olarak
+      # işleniyor (bkz. local/run.sh). Dosya yoksa ya da eskiyse yayın yine
+      # dsmart'la devam eder.
+      - name: Yerel digiturk verisiyle birleştir
+        run: node merge.mjs public/turkey.json build/dsmart.json data/digiturk.json
 
       - name: Çıktıyı doğrula
         run: node check.mjs public/turkey.json

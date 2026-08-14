@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.bersoftware.tvakisi.epg</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>__REPO__/local/run.sh</string>
+	</array>
+
+	<!-- CI 03:00 ve 15:00'te çalışıyor; digiturk verisi hazır olsun diye
+	     yarım saat önce. Mac uykudaysa uyanınca bir kez telafi çalışır. -->
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict>
+			<key>Hour</key><integer>2</integer>
+			<key>Minute</key><integer>30</integer>
+		</dict>
+		<dict>
+			<key>Hour</key><integer>14</integer>
+			<key>Minute</key><integer>30</integer>
+		</dict>
+	</array>
+
+	<key>StandardOutPath</key>
+	<string>__HOME__/Library/Logs/tv-akisi-epg/run.log</string>
+	<key>StandardErrorPath</key>
+	<string>__HOME__/Library/Logs/tv-akisi-epg/run.log</string>
+
+	<key>RunAtLoad</key>
+	<false/>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>

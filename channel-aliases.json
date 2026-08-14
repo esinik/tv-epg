@@ -1,0 +1,6 @@
+{
+  "_comment": "İki kaynağın aynı kanala farklı id verdiği durumlar. Soldaki id sağdakine çevrilir, böylece kanal listede bir kez görünür. Yeni bir mükerrer fark edersen buraya ekle.",
+
+  "cnbceuropeuk": "cnbce",
+  "htsportv": "htspor"
+}
