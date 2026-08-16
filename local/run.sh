@@ -39,10 +39,22 @@ fail() {
 
 command -v node >/dev/null 2>&1 || fail "node bulunamadı (PATH: $PATH)"
 
-# İnternet yoksa sessizce ve anlaşılır şekilde çık — bu makinede bağlantı
-# zaman zaman kopuyor, her seferinde yığın izi basmanın anlamı yok.
-/usr/bin/curl -sS -m 15 -o /dev/null https://api.github.com || \
-  fail "İnternet erişimi yok, atlandı. Müsait olunca elle çalıştır."
+# Bu makinede bağlantı sık kopuyor ve gece çalışan görev ilk denemede pes edince
+# o gün hiç veri gelmiyordu. Zamanlanmış çalışmada yarım saat boyunca aralıklı
+# dene; elle çalıştırıldığında (terminal bağlıysa) kullanıcıyı bekletme.
+if [ -t 1 ]; then TRIES=2; WAIT=10; else TRIES=10; WAIT=180; fi
+ONLINE=0
+for attempt in $(seq 1 "$TRIES"); do
+  if /usr/bin/curl -sS -m 15 -o /dev/null https://api.github.com 2>/dev/null; then
+    ONLINE=1
+    break
+  fi
+  if [ "$attempt" -lt "$TRIES" ]; then
+    echo "  internet yok ($attempt/$TRIES), ${WAIT}sn sonra tekrar denenecek"
+    sleep "$WAIT"
+  fi
+done
+[ "$ONLINE" = "1" ] || fail "İnternet erişimi yok ($TRIES deneme). Müsait olunca elle çalıştır."
 
 echo "== $(date '+%Y-%m-%d %H:%M') digiturk çekimi =="
 
