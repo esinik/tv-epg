@@ -10,16 +10,20 @@
 		<string>__REPO__/local/run.sh</string>
 	</array>
 
-	<!-- CI 03:00 ve 15:00'te çalışıyor; digiturk verisi hazır olsun diye
-	     yarım saat önce. Mac uykudaysa uyanınca bir kez telafi çalışır. -->
+	<!-- 14:30 ve 22:30 — Mac'in açık olma ihtimalinin yüksek olduğu saatler.
+	     (02:30 denendi ama makine gece neredeyse hiç açık olmuyor.)
+	     CI 03:00/15:00'te çalışıyor: 14:30'un verisi 15:00'te, 22:30'unki
+	     ertesi 03:00'te yayına giriyor. Veri 7 gün ileriyi kapsadığı için
+	     birkaç saatlik gecikme fark etmiyor.
+	     Mac uykudaysa launchd uyanınca kaçan çalışmayı bir kez telafi eder. -->
 	<key>StartCalendarInterval</key>
 	<array>
 		<dict>
-			<key>Hour</key><integer>2</integer>
+			<key>Hour</key><integer>14</integer>
 			<key>Minute</key><integer>30</integer>
 		</dict>
 		<dict>
-			<key>Hour</key><integer>14</integer>
+			<key>Hour</key><integer>22</integer>
 			<key>Minute</key><integer>30</integer>
 		</dict>
 	</array>
