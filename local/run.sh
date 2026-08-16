@@ -84,7 +84,26 @@ rm -f "$GUIDE"
 
 # 3) Dönüştür (CI ile aynı dönüştürücü — id/saat mantığı tek yerde)
 npm install --silent >/dev/null 2>&1 || true
+
+# Kaynak bazen yarım veri döndürüyor (üst üste çalıştırınca sınırlamaya takılıyor
+# olabilir): 103 kanal/14.864 program yerine 88/6.587 geldiği görüldü. Yarım veri
+# elimizdeki iyi dosyayı ezmesin diye önce yedekle, sonra karşılaştır.
+PREV_JSON="$REPO_DIR/data/digiturk.json"
+PREV_COUNT=0
+if [ -f "$PREV_JSON" ]; then
+  cp "$PREV_JSON" "$REPO_DIR/.digiturk.prev.json"
+  PREV_COUNT=$(node -e 'try{console.log(require("./data/digiturk.json").programmes.length)}catch(e){console.log(0)}')
+fi
+
 node convert.mjs "$GUIDE" data/digiturk.json || fail "dönüştürme başarısız"
+
+NEW_COUNT=$(node -e 'try{console.log(require("./data/digiturk.json").programmes.length)}catch(e){console.log(0)}')
+if [ "$PREV_COUNT" -gt 1000 ] && [ "$NEW_COUNT" -lt $((PREV_COUNT * 60 / 100)) ]; then
+  mv "$REPO_DIR/.digiturk.prev.json" "$PREV_JSON"
+  rm -f "$GUIDE"
+  fail "Eksik veri geldi ($NEW_COUNT program, öncekinde $PREV_COUNT). Eski dosya korundu, sonra tekrar dene."
+fi
+rm -f "$REPO_DIR/.digiturk.prev.json"
 
 SUMMARY=$(node -e '
   const d = require("./data/digiturk.json");
