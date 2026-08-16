@@ -72,8 +72,12 @@ fi
 # 2) Çek
 GUIDE="$REPO_DIR/.local-guide.xml"
 rm -f "$GUIDE"
+# tvplus de eklendi: 16.08.2026'da Türksat 3A kapanınca digiturk ve dsmart
+# rehberlerinden TRT ailesi + ücretsiz ulusal haber kanalları (Sözcü, Ekol,
+# Bengütürk, GZT, TRT Çocuk/Türk...) düştü; tvplus bunları hâlâ listeliyor.
+# tvplus GitHub runner'ından çöküyor ama TR IP'den çalışıyor, yani buraya ait.
 ( cd "$EPG_DIR" && npm run grab --- \
-    --sites=digiturk.com.tr \
+    --sites=digiturk.com.tr,tvplus.com.tr \
     --lang=tr \
     --days=7 \
     --timeout=20000 \
@@ -95,7 +99,17 @@ if [ -f "$PREV_JSON" ]; then
   PREV_COUNT=$(node -e 'try{console.log(require("./data/digiturk.json").programmes.length)}catch(e){console.log(0)}')
 fi
 
-node convert.mjs "$GUIDE" data/digiturk.json || fail "dönüştürme başarısız"
+# Kaynak her koşumda farklı bir alt küme döndürüyor (bir sefer ATV geliyor,
+# ötekinde gelmiyor). Yeni çekim kazanır, eksik kalan kanallar son bilinen
+# veriyle tamamlanır; 2 günden eski programlar budanır ki dosya şişmesin.
+mkdir -p build
+node convert.mjs "$GUIDE" build/new.json || fail "dönüştürme başarısız"
+if [ -f "$REPO_DIR/.digiturk.prev.json" ]; then
+  node merge.mjs data/digiturk.json build/new.json "$REPO_DIR/.digiturk.prev.json" --drop-past-days=2 \
+    || fail "birleştirme başarısız"
+else
+  cp build/new.json data/digiturk.json
+fi
 
 NEW_COUNT=$(node -e 'try{console.log(require("./data/digiturk.json").programmes.length)}catch(e){console.log(0)}')
 if [ "$PREV_COUNT" -gt 1000 ] && [ "$NEW_COUNT" -lt $((PREV_COUNT * 60 / 100)) ]; then
@@ -146,6 +160,12 @@ if [ -z "${GH_TOKEN:-}" ] && [ -f "$HOME/.zshenv" ]; then
   export GH_TOKEN
 fi
 [ -n "${GH_TOKEN:-}" ] || fail "GH_TOKEN bulunamadı (~/.zshenv içinde tanımlı olmalı)"
+
+# Depoya iki kopya push ediyor (proje klasörü + bu çalışma kopyası); önce
+# uzaktakini al, yoksa "non-fast-forward" ile reddediliyor.
+git -c user.name="Ertan Şinik" -c user.email="ertansinik@gmail.com" \
+    -c credential.helper= -c credential.helper='!gh auth git-credential' \
+    pull -q --rebase origin main || fail "uzak depoyla birleştirilemedi"
 
 git -c credential.helper= -c credential.helper='!gh auth git-credential' \
     push -q origin main || fail "push başarısız (commit yerel olarak duruyor)"

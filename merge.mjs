@@ -14,7 +14,19 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { dirname } from 'node:path'
 
-const [, , outputPath, ...inputs] = process.argv
+const args = process.argv.slice(2)
+// --drop-past-days=N : bitişi N günden eski programları at (yerel dosyayı
+// önceki koşumla birleştirirken geçmişin sonsuza kadar birikmesini engeller)
+let dropPastDays = null
+const outputAndInputs = args.filter((a) => {
+  const m = /^--drop-past-days=(\d+)$/.exec(a)
+  if (m) {
+    dropPastDays = Number(m[1])
+    return false
+  }
+  return true
+})
+const [outputPath, ...inputs] = outputAndInputs
 
 if (!outputPath || inputs.length === 0) {
   console.error('kullanım: node merge.mjs <çıktı.json> <girdi1.json> [girdi2.json ...]')
@@ -82,6 +94,18 @@ for (const path of inputs) {
   }
 
   stats.push(`${path}: +${newChannels} kanal, +${newProgrammes} program`)
+}
+
+if (dropPastDays !== null) {
+  const cutoff = Date.now() - dropPastDays * 86_400_000
+  let dropped = 0
+  for (const [key, p] of programmes) {
+    if ((Date.parse(p.stop) || 0) < cutoff) {
+      programmes.delete(key)
+      dropped++
+    }
+  }
+  if (dropped) console.log(`  ${dropped} eski program budandı (>${dropPastDays} gün)`)
 }
 
 // Programı olmayan kanalı yayınlama (uygulamada boş satır olarak görünür).
