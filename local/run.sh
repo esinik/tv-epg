@@ -14,6 +14,18 @@ REPO_DIR="$(pwd)"
 LOG_DIR="$HOME/Library/Logs/tv-akisi-epg"
 mkdir -p "$LOG_DIR"
 
+# run.log'u launchd açıyor (StandardOutPath) ve kendisi hiç döndürmüyor; eskiden
+# grabber'ın her hatası buraya döküldüğü için 10 günde 160 MB+ oluyordu. 5 MB'ı
+# geçince son 1 MB'ı .1'e ayır ve dosyayı yerinde kırp (launchd O_APPEND ile
+# yazdığı için aynı inode'a devam eder).
+LOG_FILE="$LOG_DIR/run.log"
+if [ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE")" -gt 5242880 ]; then
+  tail -c 1048576 "$LOG_FILE" > "$LOG_FILE.1"
+  : > "$LOG_FILE"
+fi
+# Grabber'ın ayrıntılı çıktısı yalnızca son koşum için saklanır (her seferinde ezilir).
+GRAB_LOG="$LOG_DIR/last-grab.log"
+
 # launchd asgari bir PATH ile çalışır; node ve git'i bulabilmesi için genişlet.
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
@@ -77,12 +89,27 @@ rm -f "$GUIDE"
 # Bengütürk, GZT, TRT Çocuk/Türk...) düştü; tvplus bunları hâlâ listeliyor.
 # tvplus GitHub runner'ından çöküyor ama TR IP'den çalışıyor, yani buraya ait.
 ( cd "$EPG_DIR" && npm run grab --- \
-    --sites=digiturk.com.tr,tvplus.com.tr \
+    --sites=digiturk.com.tr \
     --lang=tr \
     --days=7 \
     --timeout=20000 \
     --maxConnections=5 \
-    --output="$GUIDE" ) || fail "digiturk çekimi başarısız"
+    --output="$GUIDE" ) >"$GRAB_LOG" 2>&1 \
+  || { tail -20 "$GRAB_LOG"; fail "digiturk çekimi başarısız (ayrıntı: $GRAB_LOG)"; }
+
+# tvplus yalnızca local/tvplus.channels.xml'deki 4 kanal için; sitenin tamamını
+# çekmek koşumu 80+ dakikaya çıkarıyordu. Başarısız olursa digiturk'le devam.
+TVPLUS_GUIDE="$REPO_DIR/.local-tvplus.xml"
+rm -f "$TVPLUS_GUIDE"
+( cd "$EPG_DIR" && npm run grab --- \
+    --channels="$REPO_DIR/local/tvplus.channels.xml" \
+    --lang=tr \
+    --days=7 \
+    --timeout=20000 \
+    --maxConnections=2 \
+    --output="$TVPLUS_GUIDE" ) >>"$GRAB_LOG" 2>&1 \
+  || echo "  uyarı: tvplus çekimi başarısız, yalnızca digiturk kullanılacak"
+grep -E "done in|saving to" "$GRAB_LOG" | sed 's/^/  /'
 
 [ -s "$GUIDE" ] || fail "guide.xml boş çıktı"
 
@@ -104,11 +131,15 @@ fi
 # veriyle tamamlanır; 2 günden eski programlar budanır ki dosya şişmesin.
 mkdir -p build
 node convert.mjs "$GUIDE" build/new.json || fail "dönüştürme başarısız"
+TVPLUS_JSON=""
+if [ -s "$TVPLUS_GUIDE" ] && node convert.mjs "$TVPLUS_GUIDE" build/tvplus.json; then
+  TVPLUS_JSON=build/tvplus.json
+fi
 if [ -f "$REPO_DIR/.digiturk.prev.json" ]; then
-  node merge.mjs data/digiturk.json build/new.json "$REPO_DIR/.digiturk.prev.json" --drop-past-days=2 \
+  node merge.mjs data/digiturk.json build/new.json $TVPLUS_JSON "$REPO_DIR/.digiturk.prev.json" --drop-past-days=2 \
     || fail "birleştirme başarısız"
 else
-  cp build/new.json data/digiturk.json
+  node merge.mjs data/digiturk.json build/new.json $TVPLUS_JSON || fail "birleştirme başarısız"
 fi
 
 NEW_COUNT=$(node -e 'try{console.log(require("./data/digiturk.json").programmes.length)}catch(e){console.log(0)}')
@@ -134,7 +165,7 @@ else
   ATV="ATV yok ⚠︎"
 fi
 
-rm -f "$GUIDE"
+rm -f "$GUIDE" "$TVPLUS_GUIDE"
 
 if [ "${1:-}" = "--no-push" ]; then
   echo "  (--no-push) data/digiturk.json güncellendi, push edilmedi"

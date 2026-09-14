@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- tvplus.com.tr: yalnızca digiturk ve dsmart rehberlerinde OLMAYAN kanallar.
+     14.09.2026 ölçümü: sitenin tamamı (151 kanal) çekilince isteklerin ~%99u boş
+     dönüyor ve koşum 2 dk yerine 80+ dk sürüyordu; katkısı bu 4 kanaldan ibaretti. -->
+<channels>
+  <channel site="tvplus.com.tr" site_id="13" lang="tr" logo="https://gbzottvsc13.tvplus.com.tr:33207/CPS/images/universal/film/logo/202505/20250514/14/2121266488455eb78424_op_0_XL.webp" xmltv_id="AkitTV.tr@SD">AKİT TV</channel>
+  <channel site="tvplus.com.tr" site_id="4466" lang="tr" logo="https://gbzottvsc13.tvplus.com.tr:33207/CPS/images/universal/film/logo/202506/20250623/43/0915190429835eb8f42a_op_0_XL.webp" xmltv_id="ASTV.tr@SD">AS TV</channel>
+  <channel site="tvplus.com.tr" site_id="118" lang="tr" logo="https://gbzottvsc13.tvplus.com.tr:33207/CPS/images/universal/film/logo/202505/20250514/91/2117080969825eb88428_op_0_XL.webp" xmltv_id="BizimevTV.tr@SD">BİZİM EV TV</channel>
+  <channel site="tvplus.com.tr" site_id="133" lang="tr" logo="https://gbzottvsc13.tvplus.com.tr:33207/CPS/images/universal/film/logo/202505/20250528/15/0821315646215eb78424_op_0_XL.webp" xmltv_id="BRT1.cy@SD">BRT 1</channel>
+</channels>
